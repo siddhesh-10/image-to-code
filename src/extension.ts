@@ -96,61 +96,23 @@ export function activate(context: vscode.ExtensionContext) {
 				progress.report({ increment: 20, message: "Preparing prompt for LLM..." });
 				console.log('🔄 Step 3/5: Preparing prompt for LLM...');
 
-				// Enhanced prompt for separate files
-				const prompt = `You are a professional front‑end engineer and UI/UX expert. Your task is to analyze a provided UI screenshot and produce three complete, production‑ready code files: HTML, CSS, and JavaScript.
+				// Enhanced prompt for single HTML file with inline styles
+				const prompt = `You are a professional front‑end engineer. Analyze this UI screenshot and generate a complete HTML file with inline CSS and JavaScript.
 
-				Steps:
-				1. Analyze the screenshot to identify layout, typography, color palette, spacing, responsive behavior, and any interactive elements.
-				2. Plan your approach:
-				• Semantic HTML structure (e.g., header, nav, main, section, footer)
-				• CSS organization (variables, BEM or utility classes, responsive breakpoints)
-				• JS interactions (event listeners, form handling, animations)
-				3. Generate files: Output exactly three sections, each delimited by clear markers. No extra commentary.
-
-				Formatting rules:
-				=== file: index.html ===
-				<!DOCTYPE html>
-				<html lang="en">
-				<head>
-				<meta charset="UTF-8">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<title>UI from Screenshot</title>
-				<link rel="stylesheet" href="styles.css">
-				</head>
-				<body>
-				<!-- Structured HTML here -->
-				<script src="script.js"></script>
-				</body>
-				</html>
-
-				=== file: styles.css ===
-				/* CSS Variables for colors, fonts */
-				:root {
-				--primary-color: #…;
-				--font-family: '…', sans-serif;
-				}
-
-				/* Base resets and typography */
-				html, body { margin: 0; padding: 0; font-family: var(--font-family); }
-
-				/* Layout classes (Flexbox / Grid) */
-				/* Responsive media queries */
-				/* Hover states, transitions */
-				/* Utility & BEM component styles */
-
-				=== file: script.js ===
-				// JavaScript for interactive behavior
-				// 1. DOMContentLoaded listener
-				// 2. Event handlers (button clicks, form submissions)
-				// 3. Animations and transitions
-				// 4. Responsive adjustments if needed
+				CRITICAL: Return ONLY the HTML file content. Do NOT include any explanations, instructions, or markdown formatting.
 
 				Requirements:
-				- HTML: Use semantic tags, meaningful class names, ARIA attributes, and component comments.
-				- CSS: Implement CSS variables, Flexbox/Grid matching the screenshot, responsive breakpoints, hover/focus states, smooth transitions, modern best practices.
-				- JS: Encapsulate logic in functions/modules, handle all interactions, include basic form validation, use requestAnimationFrame or CSS classes for animations.
+				- Create a complete HTML file with <!DOCTYPE html>
+				- Include inline CSS in <style> tag in <head>
+				- Include inline JavaScript in <script> tag before </body>
+				- Match the screenshot's layout, colors, fonts, and spacing
+				- Use semantic HTML tags and meaningful class names
+				- Include responsive design with media queries
+				- Add hover effects and smooth transitions
+				- Handle form interactions and animations
+				- Make it production-ready and browser-compatible
 
-				Return only the three complete file sections—no additional text. Ensure each section is complete, syntactically correct, and ready to drop into a new project.`;
+				Start your response with <!DOCTYPE html> and end with </html>. Include nothing else.`;
 
 
 				console.log('📝 Prompt prepared, length:', prompt.length, 'characters');
@@ -171,12 +133,9 @@ export function activate(context: vscode.ExtensionContext) {
 				progress.report({ increment: 70, message: "Extracting and processing code..." });
 				console.log('🔄 Step 5/5: Extracting and processing code...');
 				
-				// Extract and separate the generated code
-				const { htmlCode, cssCode, jsCode } = extractSeparateFiles(ollamaResponse);
-				console.log(`📊 Extracted code sizes:`);
-				console.log(`   - HTML: ${htmlCode.length} characters`);
-				console.log(`   - CSS: ${cssCode.length} characters`);
-				console.log(`   - JS: ${jsCode.length} characters`);
+				// Extract the generated HTML code
+				const htmlCode = extractSingleHTMLFile(ollamaResponse);
+				console.log(`📊 Extracted HTML file size: ${htmlCode.length} characters`);
 				
 				progress.report({ increment: 80, message: "Creating output folder..." });
 				console.log('📁 Creating output directory...');
@@ -189,46 +148,32 @@ export function activate(context: vscode.ExtensionContext) {
 					console.log('✅ Output directory already exists');
 				}
 				
-				// Generate file names
+				// Generate file name
 				const htmlFileName = 'index.html';
-				const cssFileName = 'styles.css';
-				const jsFileName = 'script.js';
-				
 				const htmlFilePath = path.join(outputDir, htmlFileName);
-				const cssFilePath = path.join(outputDir, cssFileName);
-				const jsFilePath = path.join(outputDir, jsFileName);
 				
-				progress.report({ increment: 90, message: "Saving files..." });
-				console.log('💾 Saving files...');
+				progress.report({ increment: 90, message: "Saving file..." });
+				console.log('💾 Saving HTML file...');
 				
-				// Save the separate files
+				// Save the single HTML file
 				fs.writeFileSync(htmlFilePath, htmlCode);
-				fs.writeFileSync(cssFilePath, cssCode);
-				fs.writeFileSync(jsFilePath, jsCode);
 				
-				console.log('✅ Files saved successfully:');
+				console.log('✅ File saved successfully:');
 				console.log('   - HTML:', htmlFilePath);
-				console.log('   - CSS:', cssFilePath);
-				console.log('   - JS:', jsFilePath);
 				
 				progress.report({ increment: 95, message: "Opening editor..." });
 				console.log('📝 Opening generated code in editor...');
 				
-				// Create a new document with the HTML code
-				const document = await vscode.workspace.openTextDocument({
-					content: htmlCode,
-					language: 'html'
-				});
-				
-				// Show the document
+				// Open the file we have already stored
+				const document = await vscode.workspace.openTextDocument(htmlFilePath);
 				await vscode.window.showTextDocument(document);
 				
 				progress.report({ increment: 100, message: "Complete!" });
 				console.log('🎉 UI code generation completed successfully!');
 			});
 			
-			// Show success message with file locations
-			vscode.window.showInformationMessage(`UI code generated successfully! Files saved to: ${outputDir}`);
+			// Show success message with file location
+			vscode.window.showInformationMessage(`UI code generated successfully! HTML file saved to: ${outputDir}`);
 			console.log('✅ Success message displayed to user');
 			
 		} catch (error) {
@@ -256,7 +201,8 @@ async function callOllamaAPI(base64Image: string, prompt: string): Promise<strin
 		console.log('   - Timeout: 5 minutes (300 seconds)');
 		
 		const response = await axios.post('http://localhost:11434/api/generate', {
-			model: 'llava',
+			// model: 'llava',
+			model: 'llava-llama3:8b',
 			prompt: prompt,
 			images: [base64Image],
 			stream: false
@@ -297,144 +243,108 @@ async function callOllamaAPI(base64Image: string, prompt: string): Promise<strin
 }
 
 /**
- * Extracts and separates HTML, CSS, and JavaScript from the LLM response
+ * Extracts a single HTML file from the LLM response
  */
-function extractSeparateFiles(response: string): { htmlCode: string, cssCode: string, jsCode: string } {
-	console.log('🔍 Extracting separate files from LLM response...');
-	
-	// Try to extract separate files using the === markers
-	const htmlMatch = response.match(/===HTML===\s*([\s\S]*?)(?===CSS===|===JS===|$)/i);
-	const cssMatch = response.match(/===CSS===\s*([\s\S]*?)(?===HTML===|===JS===|$)/i);
-	const jsMatch = response.match(/===JS===\s*([\s\S]*?)(?===HTML===|===CSS===|$)/i);
-	
-	console.log('📊 Extraction results:');
-	console.log('   - HTML markers found:', !!htmlMatch);
-	console.log('   - CSS markers found:', !!cssMatch);
-	console.log('   - JS markers found:', !!jsMatch);
+function extractSingleHTMLFile(response: string): string {
+	console.log('🔍 Extracting single HTML file from LLM response...');
 	
 	let htmlCode = '';
-	let cssCode = '';
-	let jsCode = '';
 	
-	// Extract HTML
-	if (htmlMatch && htmlMatch[1]) {
-		console.log('✅ Extracting HTML from markers...');
-		htmlCode = htmlMatch[1].trim();
-		// Ensure HTML has proper structure
-		if (!htmlCode.includes('<!DOCTYPE html>')) {
-			console.log('⚠️  HTML missing DOCTYPE, adding structure...');
-			htmlCode = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generated UI</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-${htmlCode}
-<script src="script.js"></script>
-</body>
-</html>`;
-		}
+	// Try to extract HTML from code blocks first
+	const htmlBlockMatch = response.match(/```html\s*([\s\S]*?)```/i);
+	if (htmlBlockMatch) {
+		console.log('✅ Extracting HTML from code blocks...');
+		htmlCode = htmlBlockMatch[1].trim();
 	} else {
-		console.log('⚠️  HTML markers not found, trying code blocks...');
-		// Fallback: try to extract HTML from code blocks
-		const htmlBlockMatch = response.match(/```html\s*([\s\S]*?)```/i);
-		if (htmlBlockMatch) {
-			console.log('✅ Extracting HTML from code blocks...');
-			htmlCode = htmlBlockMatch[1].trim();
+		console.log('⚠️  HTML code blocks not found, looking for raw HTML...');
+		
+		// Try to find HTML content without markdown
+		const htmlMatch = response.match(/<!DOCTYPE html>[\s\S]*?<\/html>/i);
+		if (htmlMatch) {
+			console.log('✅ Found complete HTML document...');
+			htmlCode = htmlMatch[0].trim();
 		} else {
-			console.log('⚠️  No HTML found, creating basic structure...');
-			// Create basic HTML structure
+			console.log('⚠️  No complete HTML found, creating basic structure...');
+			// Create basic HTML structure with inline styles
 			htmlCode = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generated UI</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Generated CSS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Generated UI</h1>
         <p>UI component generated from image</p>
     </div>
-    <script src="script.js"></script>
+    <script>
+        // Generated JavaScript
+        console.log('UI Component loaded successfully!');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM is ready!');
+        });
+    </script>
 </body>
 </html>`;
 		}
 	}
 	
-	// Extract CSS
-	if (cssMatch && cssMatch[1]) {
-		console.log('✅ Extracting CSS from markers...');
-		cssCode = cssMatch[1].trim();
-	} else {
-		console.log('⚠️  CSS markers not found, trying code blocks...');
-		// Try to extract CSS from code blocks
-		const cssBlockMatch = response.match(/```css\s*([\s\S]*?)```/i);
-		if (cssBlockMatch) {
-			console.log('✅ Extracting CSS from code blocks...');
-			cssCode = cssBlockMatch[1].trim();
-		} else {
-			console.log('⚠️  No CSS found, creating basic styles...');
-			// Create basic CSS
-			cssCode = `/* Generated CSS */
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-p {
-    color: #666;
-    line-height: 1.6;
-}`;
-		}
+	// Clean up any markdown artifacts and prompt contamination
+	htmlCode = htmlCode.replace(/^\s*```(?:html)?\s*\n?/i, '');
+	htmlCode = htmlCode.replace(/\n?\s*```\s*$/i, '');
+	
+	// Remove any prompt instructions that might have leaked into the code
+	htmlCode = htmlCode.replace(/\/\*\s*(?:CRITICAL|Requirements|Steps|Format|Return).*?\*\//gis, '');
+	htmlCode = htmlCode.replace(/\/\/\s*(?:CRITICAL|Requirements|Steps|Format|Return).*$/gim, '');
+	htmlCode = htmlCode.replace(/<!--\s*(?:CRITICAL|Requirements|Steps|Format|Return).*?-->/gis, '');
+	
+	// Remove any text that looks like prompt instructions
+	htmlCode = htmlCode.replace(/You are a professional.*?Include nothing else\./gis, '');
+	htmlCode = htmlCode.replace(/Analyze this UI screenshot.*?Include nothing else\./gis, '');
+	
+	// Clean up extra whitespace and ensure proper HTML structure
+	htmlCode = htmlCode.trim();
+	
+	// Ensure we have a complete HTML document
+	if (!htmlCode.includes('<!DOCTYPE html>')) {
+		console.log('⚠️  Adding DOCTYPE declaration...');
+		htmlCode = '<!DOCTYPE html>\n' + htmlCode;
 	}
 	
-	// Extract JavaScript
-	if (jsMatch && jsMatch[1]) {
-		console.log('✅ Extracting JavaScript from markers...');
-		jsCode = jsMatch[1].trim();
-	} else {
-		console.log('⚠️  JS markers not found, trying code blocks...');
-		// Try to extract JS from code blocks
-		const jsBlockMatch = response.match(/```javascript\s*([\s\S]*?)```/i);
-		if (jsBlockMatch) {
-			console.log('✅ Extracting JavaScript from code blocks...');
-			jsCode = jsBlockMatch[1].trim();
-		} else {
-			console.log('⚠️  No JavaScript found, creating basic script...');
-			// Create basic JavaScript
-			jsCode = `// Generated JavaScript
-console.log('UI Component loaded successfully!');
-
-// Add any interactive functionality here
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM is ready!');
-});`;
-		}
-	}
+	console.log('✅ HTML file extraction completed');
+	console.log(`📊 Final HTML size: ${htmlCode.length} characters`);
 	
-	console.log('✅ File extraction completed');
-	return { htmlCode, cssCode, jsCode };
+	return htmlCode;
 }

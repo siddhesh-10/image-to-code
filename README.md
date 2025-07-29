@@ -4,8 +4,8 @@ A VS Code extension that generates front-end code from UI screenshots using loca
 
 ## Features
 
-- **Image-to-Code Generation**: Convert UI screenshots to HTML/CSS/JS code
-- **Separate File Output**: Generates organized HTML, CSS, and JavaScript files
+- **Image-to-Code Generation**: Convert UI screenshots to complete HTML files
+- **Single File Output**: Generates one HTML file with inline CSS and JavaScript
 - **File Picker Integration**: Select any image from your PC
 - **Local Processing**: Uses Ollama with llava model for offline processing
 - **VS Code Integration**: Seamless integration with VS Code editor
@@ -50,17 +50,29 @@ ollama serve
 
 ## Installation
 
-1. Clone or download this extension
-2. Open the extension folder in VS Code
-3. Install dependencies:
+### Prerequisites for Development
+
+1. **Install Node.js** (version 18 or higher)
+   - Download from [https://nodejs.org/](https://nodejs.org/)
+
+2. **Install VS Code Extension Generator** (one-time setup)
+   ```bash
+   npm install -g yo generator-code
+   ```
+
+### Extension Setup
+
+1. **Clone or download this extension**
+2. **Open the extension folder in VS Code**
+3. **Install project dependencies**:
    ```bash
    npm install
    ```
-4. Compile the extension:
+4. **Compile the extension**:
    ```bash
    npm run compile
    ```
-5. Press `F5` to run the extension in a new VS Code window
+5. **Press `F5` to run the extension in a new VS Code window**
 
 ## Usage
 
@@ -72,27 +84,25 @@ ollama serve
 3. **Enter Folder Name**: Specify where to save the generated code
 4. **Wait for Processing**: The extension will:
    - Load and process the image
-   - Generate HTML, CSS, and JavaScript code
-   - Create separate files in your specified folder
+   - Generate complete HTML code with inline CSS and JavaScript
+   - Create a single HTML file in your specified folder
    - Open the result in a new editor tab
 
 ## How It Works
 
 1. **Image Selection**: File picker allows selection of any image file
 2. **Image Processing**: Converts the image to base64 and sends it to Ollama's llava model
-3. **Code Generation**: The LLM analyzes the UI and generates separate HTML, CSS, and JavaScript files
-4. **File Organization**: Creates a professional project structure with separate files
+3. **Code Generation**: The LLM analyzes the UI and generates a complete HTML file with inline CSS and JavaScript
+4. **File Creation**: Creates a single, self-contained HTML file ready to open in any browser
 5. **Display**: Opens the generated HTML code in a new VS Code editor tab
 
 ## Output Structure
 
-The extension generates a complete project structure:
+The extension generates a single, self-contained HTML file:
 
 ```
 your-folder-name/
-├── index.html      # Main HTML structure
-├── styles.css      # All CSS styling
-└── script.js       # JavaScript functionality
+└── index.html      # Complete HTML with inline CSS and JavaScript
 ```
 
 ## Configuration
@@ -161,35 +171,49 @@ ui-to-code/
 │   └── extension.ts          # Main extension logic
 ├── out/
 │   └── extension.js          # Compiled extension
-├── package.json              # Extension manifest
+├── package.json              # Extension manifest & dependencies
+├── tsconfig.json            # TypeScript configuration
+├── .gitignore               # Git ignore rules
 └── README.md                # This file
 ```
 
-### Building
+### Dependencies
+
+#### Production Dependencies
+- **axios** (`^1.6.0`) - HTTP client for Ollama API communication
+
+#### Development Dependencies
+- **typescript** (`^5.8.3`) - TypeScript compiler
+- **@types/vscode** (`^1.102.0`) - VS Code API type definitions
+- **@types/node** (`20.x`) - Node.js type definitions
+- **eslint** (`^9.25.1`) - Code linting
+- **@typescript-eslint** - TypeScript ESLint rules
+- **@vscode/test-*`** - VS Code extension testing utilities
+
+#### Global Tools (One-time setup)
+- **yo** (`5.1.0`) - Yeoman scaffolding tool
+- **generator-code** (`1.11.10`) - VS Code extension generator
+
+### Building and Development
 ```bash
 npm run compile    # Compile TypeScript
 npm run watch      # Watch for changes
+npm run lint       # Run ESLint
+npm test           # Run tests
 ```
 
-### Testing
+### Creating New Extensions
+To create a new VS Code extension from scratch:
 ```bash
-npm test          # Run tests
+npm install -g yo generator-code
+yo code
+# Follow the prompts to generate a new extension
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
 
 ## Acknowledgments
 
 - [Ollama](https://ollama.ai/) for local LLM inference
 - [llava](https://github.com/haotian-liu/LLaVA) for multimodal capabilities
-- VS Code Extension API for the development framework
+- [VS Code Extension API](https://code.visualstudio.com/api) for the development framework
+- [Yeoman](https://yeoman.io/) and [generator-code](https://github.com/Microsoft/vscode-generator-code) for project scaffolding
+- [Axios](https://axios-http.com/) for HTTP client functionality
