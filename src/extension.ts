@@ -99,12 +99,12 @@ export function activate(context: vscode.ExtensionContext) {
 				// Enhanced prompt for single HTML file with inline styles
 				const prompt = `You are a professional front‑end engineer. Analyze this UI screenshot and generate a complete HTML file with inline CSS and JavaScript.
 
-				CRITICAL: Return ONLY the HTML file content. Do NOT include any explanations, instructions, or markdown formatting.
+				CRITICAL: Return ONLY the HTML file content. Do NOT include any explanations, instructions.
 
 				Requirements:
 				- Create a complete HTML file with <!DOCTYPE html>
-				- Include inline CSS in <style> tag in <head>
-				- Include inline JavaScript in <script> tag before </body>
+				- Important to Include inline CSS in <style> tag in <head>
+				- Important to Include inline JavaScript in <script> tag before </body>
 				- Match the screenshot's layout, colors, fonts, and spacing
 				- Use semantic HTML tags and meaningful class names
 				- Include responsive design with media queries
