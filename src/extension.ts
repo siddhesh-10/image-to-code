@@ -5,13 +5,7 @@ import axios from 'axios';
 
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "ui-to-code" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
 	const disposable = vscode.commands.registerCommand('ui-to-code.generateFromImage', async () => {
 		try {
 			console.log('🚀 Starting UI code generation process...');
@@ -76,19 +70,16 @@ export function activate(context: vscode.ExtensionContext) {
 				progress.report({ increment: 0, message: "Loading image..." });
 				console.log('🔄 Step 1/5: Loading and processing image...');
 				
-				// Check if image exists
 				if (!fs.existsSync(selectedImagePath)) {
 					throw new Error('Selected image not found.');
 				}
 				
-				// Get image file size for logging
 				const imageStats = fs.statSync(selectedImagePath);
 				console.log(`📊 Image file size: ${(imageStats.size / 1024).toFixed(2)} KB`);
 				
 				progress.report({ increment: 10, message: "Converting image to base64..." });
 				console.log('🔄 Step 2/5: Converting image to base64...');
 				
-				// Convert image to base64
 				const imageBuffer = fs.readFileSync(selectedImagePath);
 				const base64Image = imageBuffer.toString('base64');
 				console.log(`📊 Base64 image size: ${(base64Image.length / 1024).toFixed(2)} KB`);
@@ -96,15 +87,14 @@ export function activate(context: vscode.ExtensionContext) {
 				progress.report({ increment: 20, message: "Preparing prompt for LLM..." });
 				console.log('🔄 Step 3/5: Preparing prompt for LLM...');
 
-				// Enhanced prompt for single HTML file with inline styles
 				const prompt = `You are a professional front‑end engineer. Analyze this UI screenshot and generate a complete HTML file with inline CSS and JavaScript.
 
-				CRITICAL: Return ONLY the HTML file content. Do NOT include any explanations, instructions.
+				CRITICAL: Return ONLY the HTML file content with inline CSS and Javascript in script tag. Do NOT include any explanations, instructions, or markdown formatting.
 
 				Requirements:
 				- Create a complete HTML file with <!DOCTYPE html>
 				- Important to Include inline CSS in <style> tag in <head>
-				- Important to Include inline JavaScript in <script> tag before </body>
+				- Include inline JavaScript in <script> tag before </body>
 				- Match the screenshot's layout, colors, fonts, and spacing
 				- Use semantic HTML tags and meaningful class names
 				- Include responsive design with media queries
