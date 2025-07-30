@@ -191,8 +191,8 @@ async function callOllamaAPI(base64Image: string, prompt: string): Promise<strin
 		console.log('   - Timeout: 5 minutes (300 seconds)');
 		
 		const response = await axios.post('http://localhost:11434/api/generate', {
-			// model: 'llava',
-			model: 'llava-llama3:8b',
+			model: 'llava',
+			// model: 'llava-llama3:8b',
 			prompt: prompt,
 			images: [base64Image],
 			stream: false
